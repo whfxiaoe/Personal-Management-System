@@ -89,7 +89,7 @@ public class PersonController extends BaseController {
      * @Param:  tel(String)     state(Integer)
      * @return:
      * @Author: xiaoe
-     * @Date: 2019/03/07
+     * @Date: 2019/03/07-08
      */
     @GetMapping("list")
     public MKOResponse list(@RequestParam(defaultValue = "3") Integer state,
@@ -126,7 +126,7 @@ public class PersonController extends BaseController {
         try {
             Person person = personRepository.chooseById(id);
             if (person == null) {
-                return makeResponse(MKOResponseCode.DataNotFound, "", "用户名或密码错误或已禁用");
+                return makeResponse(MKOResponseCode.DataNotFound, "", "查无数据无需删除");
             }
             personRepository.delete(person);
             return makeSuccessResponse("已删除");
@@ -170,7 +170,7 @@ public class PersonController extends BaseController {
             person.setPassword(personData.getPassword());
 
             person.setSex(personData.getSex() == null? 1: personData.getSex());
-            person.setRole(personData.getRole() == null? 1: personData.getRole());
+            person.setRole(personData.getRole() == null? 0: personData.getRole());
             person.setState(1);
             person.setGmtCreate(new Date());
             personRepository.saveAndFlush(person);
@@ -201,12 +201,13 @@ public class PersonController extends BaseController {
                 return makeResponse(MKOResponseCode.DataNotFound,"","此[id]无数据");
             }
 
-            person.setName(personData.getName());
-            person.setAge(personData.getAge());
-            person.setSex(personData.getSex());
-            person.setPassword(personData.getPassword());
-            person.setRole(personData.getRole());
-            person.setState(personData.getState());
+            person.setName(personData.getName() == null? person.getName() : personData.getName());
+            person.setAge(personData.getAge() == null? person.getAge() : personData.getAge());
+            person.setPassword(personData.getPassword() == null? person.getPassword() : personData.getPassword());
+
+            person.setSex(personData.getSex() == null? 1: personData.getSex());
+            person.setRole(personData.getRole() == null? 0: personData.getRole());
+            person.setState(personData.getState() == null? 1:personData.getState());
             person.setGmtCreate(new Date());
             personRepository.saveAndFlush(person);
             return makeSuccessResponse("已修改");
