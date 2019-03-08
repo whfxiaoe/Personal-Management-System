@@ -12,6 +12,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.transform.Transformers;
+import org.intellij.lang.annotations.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,18 +94,25 @@ public class PersonController extends BaseController {
      */
     @GetMapping("list")
     public MKOResponse list(@RequestParam(defaultValue = "3") Integer state,
-                            @RequestParam(defaultValue = "") String nameTel) {
+                            @RequestParam(defaultValue = "") String nameTel,
+                            @RequestParam(defaultValue = "1") Integer page,
+                            @RequestParam(defaultValue = "10") Integer count) {
         try {
-            String sel = "select id,name,sex,age,tel,state,role,gmtCreate from info where 1 = 1 ";
+            String scount = "SELECT COUNT(*) FROM info WHERE 1 = 1 ";
+            String sel = "SELECT id,name,sex,age,tel,state,role,gmt_create FROM info WHERE 1 = 1 ";
             if (state != 3) {
-                sel = sel + "AND state = " + state + " ";
+                sel += "AND state = " + state + " ";
+                scount += "AND state = " + state + " ";
             }
 
             if (nameTel.length() != 0) {
-                sel = sel + "AND (name like '%" + nameTel + "%' OR tel like '%" + nameTel + "%') ";
+                sel += "AND (name LIKE '%" + nameTel + "%' OR tel LIKE '%" + nameTel + "%') ";
+                scount += "AND (name LIKE '%" + nameTel + "%' OR tel LIKE '%" + nameTel + "%') ";
             }
+            sel += "LIMIT "+(page-1)*count +"," + count;
 
             Query queryC = entityManager.createNativeQuery(sel);
+         //   Query queryX = entityManager.createNativeQuery(scount);
             List<Map<String, Object>> result = ((SQLQuery)queryC.unwrap(SQLQuery.class)).setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP).getResultList();
             return makeSuccessResponse(result);
         } catch (Exception e) {
