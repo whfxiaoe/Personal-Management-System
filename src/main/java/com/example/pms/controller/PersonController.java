@@ -46,10 +46,13 @@ public class PersonController extends BaseController {
     public MKOResponse login(@RequestParam String tel, @RequestParam String password) {
         try {
             Person person = personRepository.chooseTPS(tel, password);
+            if(person == null) {
+                return makeResponse(MKOResponseCode.DataNotFound, "", "用户名或密码错误或已禁用");
+            }
             Map<String, Object> hashMap = new HashMap<>();
             hashMap.put("id", person.getId());
             hashMap.put("role", person.getRole());
-            return person == null ? makeResponse(MKOResponseCode.DataNotFound, "", "用户名或密码错误或已禁用") : makeSuccessResponse(hashMap);
+            return makeSuccessResponse(hashMap);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());
@@ -153,14 +156,22 @@ public class PersonController extends BaseController {
             {
                 return makeResponse(MKOResponseCode.DataExist,"","手机号已存在");
             }
+            if(personData.getTel() == null && personData.getTel().length() == 0){
+                return makeResponse(MKOResponseCode.ParamsLack,"","缺少参数[tel]");
+            }
+            if(personData.getPassword() == null && personData.getPassword().length() == 0){
+                return makeResponse(MKOResponseCode.ParamsLack,"","缺少参数[password]");
+            }
             Person person = new Person();
-            person.setName(personData.getName());
             person.setAge(personData.getAge());
-            person.setSex(personData.getSex());
+            person.setName(personData.getName());
+
             person.setTel(personData.getTel());
             person.setPassword(personData.getPassword());
-            person.setRole(personData.getRole());
-            person.setState(personData.getState());
+
+            person.setSex(personData.getSex() == null? 1: personData.getSex());
+            person.setRole(personData.getRole() == null? 1: personData.getRole());
+            person.setState(1);
             person.setGmtCreate(new Date());
             personRepository.saveAndFlush(person);
             return makeSuccessResponse("已添加");
@@ -218,6 +229,9 @@ public class PersonController extends BaseController {
                              @RequestParam Integer id){
         try {
             Person person = personRepository.chooseById(id);
+            if(person == null){
+                return makeResponse(MKOResponseCode.DataNotFound,"","此[id]无数据");
+            }
             person.setState(state);
             person.setGmtCreate(new Date());
             personRepository.saveAndFlush(person);
