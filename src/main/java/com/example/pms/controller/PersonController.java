@@ -34,11 +34,18 @@ public class PersonController extends BaseController {
     public PersonController() {
     }
 
+    /**
+     * @Description: 用户登录
+     * @Param:  tel(String)     password(String)
+     * @return:
+     * @Author: xiaoe
+     * @Date: 2019/03/07
+     */
     @GetMapping("login")
     public MKOResponse login(@RequestParam String tel, @RequestParam String password) {
         try {
-            Person person = this.personRepository.chooseTPS(tel, password);
-            return person == null ? makeResponse(MKOResponseCode.DataNotFound, "", "用户名或密码错误或已禁用") : makeSuccessResponse("登录成功");
+            Person personId = personRepository.chooseTPS(tel, password);
+            return personId == null ? makeResponse(MKOResponseCode.DataNotFound, "", "用户名或密码错误或已禁用") : makeSuccessResponse("登录成功，id =" + personId);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());
@@ -46,10 +53,18 @@ public class PersonController extends BaseController {
         }
     }
 
+    /**
+     * @Description: 用户详情
+     * @Param:  tel(String)
+     * @return:
+     * @Author: xiaoe
+     * @Date: 2019/03/07
+     */
     @GetMapping("info")
-    public MKOResponse info(@RequestParam String tel) {
+    public MKOResponse info(@RequestParam Integer id) {
         try {
-            Person person = this.personRepository.chooseT(tel);
+            Person person = personRepository.getOne(id);
+            person.setPassword("******");
             return person == null ? makeResponse(MKOResponseCode.DataNotFound, "", "查不到信息") : makeSuccessResponse(person);
         } catch (Exception e) {
             e.printStackTrace();
@@ -58,11 +73,18 @@ public class PersonController extends BaseController {
         }
     }
 
+    /**
+     * @Description: 用户列表
+     * @Param:  tel(String)     state(Integer)
+     * @return:
+     * @Author: xiaoe
+     * @Date: 2019/03/07
+     */
     @GetMapping("list")
     public MKOResponse list(@RequestParam(defaultValue = "3") Integer state,
                             @RequestParam(defaultValue = "") String nameTel) {
         try {
-            String sel = "select * from info where 1 = 1 ";
+            String sel = "select id,name,sex,age,tel,state,role,gmtCreate from info where 1 = 1 ";
             if (state != 3) {
                 sel = sel + "AND state = " + state + " ";
             }
@@ -81,10 +103,17 @@ public class PersonController extends BaseController {
         }
     }
 
+    /**
+     * @Description: 删除用户
+     * @Param:  id
+     * @return:
+     * @Author: xiaoe
+     * @Date: 2019/03/07
+     */
     @GetMapping("delete")
-    public MKOResponse delete(@RequestParam String tel) {
+    public MKOResponse delete(@RequestParam Integer id) {
         try {
-            Person person = personRepository.chooseT(tel);
+            Person person = personRepository.getOne(id);
             if (person == null) {
                 return makeResponse(MKOResponseCode.DataNotFound, "", "用户名或密码错误或已禁用");
             }
@@ -98,9 +127,21 @@ public class PersonController extends BaseController {
         }
     }
 
+
+    /**
+     * @Description: 添加用户
+     * @Param:
+     * @return:
+     * @Author: xiaoe
+     * @Date: 2019/03/07
+     */
     @PostMapping("add")
     public MKOResponse add(@RequestBody Person personData) {
         try {
+            if(personRepository.validateTel(personData.getTel()) != null)
+            {
+                return makeResponse(MKOResponseCode.DataExist,"","手机号已存在");
+            }
             Person person = new Person();
             person.setName(personData.getName());
             person.setAge(personData.getAge());
@@ -119,24 +160,52 @@ public class PersonController extends BaseController {
         }
     }
 
+    /**
+     * @Description: 修改用户信息
+     * @Param:
+     * @return:
+     * @Author: xiaoe
+     * @Date: 2019/03/08
+     */
     @PostMapping("update")
     public MKOResponse update(@RequestBody Person personData) {
         try {
+            Person person = personRepository.getOne(personData.getId());
 
-            Person person = new Person();
             person.setName(personData.getName());
             person.setAge(personData.getAge());
             person.setSex(personData.getSex());
-            person.setTel(personData.getTel());
             person.setPassword(personData.getPassword());
             person.setRole(personData.getRole());
             person.setState(personData.getState());
             person.setGmtCreate(new Date());
-            return this.makeSuccessResponse("已添加");
-        } catch (Exception var3) {
-            var3.printStackTrace();
-            logger.error(var3.getMessage());
-            return this.makeBussessErrorResponse("未知错误");
+            return makeSuccessResponse("已修改");
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            return makeBussessErrorResponse("未知错误");
+        }
+    }
+
+    /**
+     * @Description: 切换启用禁用状态
+     * @Param:  state(Integer)      id
+     * @return:
+     * @Author: xiaoe
+     * @Date: 2019/03/08
+     */
+    @GetMapping("swich")
+    public MKOResponse swich(@RequestParam Integer state,
+                             @RequestParam Integer id){
+        try {
+            Person person = personRepository.getOne(id);
+            person.setState(state);
+            person.setGmtCreate(new Date());
+            return makeSuccessResponse("已修改");
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            return makeBussessErrorResponse("未知错误");
         }
     }
 }

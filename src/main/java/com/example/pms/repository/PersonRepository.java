@@ -9,10 +9,10 @@ import java.util.Optional;
 
 public interface PersonRepository extends JpaRepository<Person, Integer> {
 
-    @Query(value = "SELECT * FROM info WHERE tel = ?1 AND password = ?2 AND state = 1", nativeQuery = true)
+    @Query(value = "SELECT id FROM info WHERE tel = ?1 AND password = ?2 AND state = 1", nativeQuery = true)
     Person chooseTPS(String tel, String password);
 
     @Query(value = "SELECT * FROM info WHERE tel = ?1", nativeQuery = true)
-    Person chooseT(String tel);
+    Person validateTel(String tel);
 
 }
