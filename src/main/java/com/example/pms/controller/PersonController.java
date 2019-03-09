@@ -68,7 +68,7 @@ public class PersonController extends BaseController {
 
     /**
      * @Description: 用户详情
-     * @Param: tel(String)
+     * @Param: id(Integer)
      * @return:
      * @Author: xiaoe
      * @Date: 2019/03/07
@@ -92,7 +92,7 @@ public class PersonController extends BaseController {
 
     /**
      * @Description: 用户列表
-     * @Param:  tel(String)     state(Integer)
+     * @Param:  tel(String)     state(Integer)      page(Integer)      count(Integer)
      * @return:
      * @Author: xiaoe
      * @Date: 2019/03/07-09
