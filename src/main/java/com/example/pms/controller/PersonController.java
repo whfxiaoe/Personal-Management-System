@@ -51,14 +51,23 @@ public class PersonController extends BaseController {
     @GetMapping("login")
     public MKOResponse login(@RequestParam String tel, @RequestParam String password) {
         try {
-            Person person = personRepository.chooseTPS(tel, password);
+            Person person = personRepository.chooseTP(tel, password);
             if(person == null) {
-                return makeResponse(MKOResponseCode.DataNotFound, "", "用户名或密码错误或已禁用");
+                return makeResponse(MKOResponseCode.DataNotFound, "", "用户名或密码错误");
             }
-            Map<String, Object> hashMap = new HashMap<>();
-            hashMap.put("id", person.getId());
-            hashMap.put("role", person.getRole());
-            return makeSuccessResponse(hashMap);
+            if(person.getState() == 0) {
+                return makeResponse(MKOResponseCode.DataNotFound, "", "该用户已禁用");
+            }
+            Map<String,Object> result = new HashMap<>();
+            result.put("id",person.getId());
+            result.put("name",person.getName());
+            result.put("sex",person.getSex());
+            result.put("tel",person.getTel());
+            result.put("age",person.getAge());
+            result.put("role",person.getRole());
+            result.put("state",person.getState());
+            result.put("gmtCreate",person.getGmtCreate());
+            return makeSuccessResponse(result);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());
@@ -80,8 +89,16 @@ public class PersonController extends BaseController {
             if (person == null) {
                 return makeResponse(MKOResponseCode.DataNotFound, "", "查不到信息");
             }
-            person.setPassword("******");
-            return makeSuccessResponse(person);
+            Map<String,Object> result = new HashMap<>();
+            result.put("id",person.getId());
+            result.put("name",person.getName());
+            result.put("sex",person.getSex());
+            result.put("tel",person.getTel());
+            result.put("age",person.getAge());
+            result.put("role",person.getRole());
+            result.put("state",person.getState());
+            result.put("gmtCreate",person.getGmtCreate());
+            return makeSuccessResponse(result);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage());
@@ -92,7 +109,7 @@ public class PersonController extends BaseController {
 
     /**
      * @Description: 用户列表
-     * @Param:  tel(String)     state(Integer)      page(Integer)      count(Integer)
+     * @Param:  nameTel(String)     state(Integer)      page(Integer)      count(Integer)
      * @return:
      * @Author: xiaoe
      * @Date: 2019/03/07-09
@@ -118,7 +135,6 @@ public class PersonController extends BaseController {
             Query queryC = entityManager.createNativeQuery(sel);
             Query queryX = entityManager.createNativeQuery(scount);
 
-            //判断是否可以转换
             @SuppressWarnings("unchecked")
             Map<String, BigInteger> si = (Map<String,BigInteger>)((SQLQuery)queryX.unwrap(SQLQuery.class)).setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP).getSingleResult();
             List<Map<String, Object>> list = ((SQLQuery)queryC.unwrap(SQLQuery.class)).setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP).getResultList();
@@ -253,8 +269,8 @@ public class PersonController extends BaseController {
      * @Author: xiaoe
      * @Date: 2019/03/08
      */
-    @GetMapping("swich")
-    public MKOResponse swich(@RequestParam Integer state,
+    @GetMapping("switchState")
+    MKOResponse switchState(@RequestParam Integer state,
                              @RequestParam Integer id){
         try {
             Person person = personRepository.chooseById(id);
