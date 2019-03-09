@@ -4,12 +4,17 @@ import com.example.pms.entity.Person;
 import com.example.pms.repository.PersonRepository;
 import com.example.pms.util.MKOResponse;
 import com.example.pms.util.MKOResponseCode;
+
+import java.math.BigInteger;
+import java.sql.ResultSet;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+
+import com.mysql.cj.protocol.Resultset;
 import org.hibernate.SQLQuery;
 import org.hibernate.transform.Transformers;
 import org.intellij.lang.annotations.Language;
@@ -90,7 +95,7 @@ public class PersonController extends BaseController {
      * @Param:  tel(String)     state(Integer)
      * @return:
      * @Author: xiaoe
-     * @Date: 2019/03/07-08
+     * @Date: 2019/03/07-09
      */
     @GetMapping("list")
     public MKOResponse list(@RequestParam(defaultValue = "3") Integer state,
@@ -110,10 +115,25 @@ public class PersonController extends BaseController {
                 scount += "AND (name LIKE '%" + nameTel + "%' OR tel LIKE '%" + nameTel + "%') ";
             }
             sel += "LIMIT "+(page-1)*count +"," + count;
-
             Query queryC = entityManager.createNativeQuery(sel);
-         //   Query queryX = entityManager.createNativeQuery(scount);
-            List<Map<String, Object>> result = ((SQLQuery)queryC.unwrap(SQLQuery.class)).setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP).getResultList();
+            Query queryX = entityManager.createNativeQuery(scount);
+
+            //判断是否可以转换
+            @SuppressWarnings("unchecked")
+            Map<String, BigInteger> si = (Map<String,BigInteger>)((SQLQuery)queryX.unwrap(SQLQuery.class)).setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP).getSingleResult();
+            List<Map<String, Object>> list = ((SQLQuery)queryC.unwrap(SQLQuery.class)).setResultTransformer(Transformers.ALIAS_TO_ENTITY_MAP).getResultList();
+
+            Map<String,Object> result = new HashMap<>();
+            //当前页数
+            result.put("page",page);
+            //总页数
+            result.put("allPage",(si.get("COUNT(*)").intValue()-1)/count+1);
+            //每页数量
+            result.put("count",count);
+            //总数量
+            result.put("countNum",si.get("COUNT(*)"));
+            //数据
+            result.put("data",list);
             return makeSuccessResponse(result);
         } catch (Exception e) {
             e.printStackTrace();
